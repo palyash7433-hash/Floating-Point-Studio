@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Interactive Data Representation Visualizer — explore how integers and floating-point numbers are stored at the bit level in computer memory.">
+    <title>Data Representation Visualizer</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container"></div>
+
+    <div class="app">
+        <!-- ─── Header ─── -->
+        <header class="app-header">
+            <h1>Data Representation <span class="accent">Visualizer</span></h1>
+            <p class="subtitle">Explore how computers store numbers at the bit level</p>
+        </header>
+
+        <main class="main-content">
+
+            <!-- ─── Controls Panel ─── -->
+            <section class="card controls-card">
+                <h2 class="card-title">Controls</h2>
+                <div class="controls-row">
+                    <div class="control-group">
+                        <label for="valueInput">Input Value</label>
+                        <input type="text" id="valueInput"
+                               placeholder="e.g. 42, -3.14, NaN, Infinity"
+                               autocomplete="off" spellcheck="false">
+                    </div>
+                    <div class="control-group">
+                        <label for="dataTypeSelect">Data Type</label>
+                        <select id="dataTypeSelect">
+                            <option value="byte">Byte (8-bit)</option>
+                            <option value="short">Short (16-bit)</option>
+                            <option value="int" selected>Int (32-bit)</option>
+                            <option value="long">Long (64-bit)</option>
+                            <option value="float">Float (32-bit)</option>
+                            <option value="double">Double (64-bit)</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Sign Configuration</label>
+                        <div class="toggle-container" id="signToggle">
+                            <button class="toggle-btn active" data-value="signed" id="btnSigned">Signed</button>
+                            <button class="toggle-btn" data-value="unsigned" id="btnUnsigned">Unsigned</button>
+                        </div>
+                        <p class="toggle-note" id="signNote" style="display:none;">
+                            IEEE 754 uses a dedicated sign bit; "Unsigned" does not apply.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ─── Dynamic Range Display ─── -->
+            <section class="card range-card">
+                <div class="range-info">
+                    <div class="range-item">
+                        <span class="range-label">Min</span>
+                        <span class="range-value" id="rangeMin">-2,147,483,648</span>
+                    </div>
+                    <div class="range-divider"></div>
+                    <div class="range-item">
+                        <span class="range-label">Max</span>
+                        <span class="range-value" id="rangeMax">2,147,483,647</span>
+                    </div>
+                </div>
+                <div class="overflow-warning" id="overflowWarning" style="display:none;">
+                    <span class="warning-icon">⚠</span>
+                    <span class="warning-text" id="overflowText">Value exceeds the representable range!</span>
+                </div>
+            </section>
+
+            <!-- ─── Interactive Bit Grid ─── -->
+            <section class="card bit-grid-card">
+                <div class="bit-grid-header">
+                    <h2 class="card-title">Interactive Memory Grid</h2>
+                    <div class="legend" id="bitLegend"></div>
+                </div>
+                <div class="bit-grid-container" id="bitGridContainer"></div>
+            </section>
+
+            <!-- ─── Conversion Outputs ─── -->
+            <section class="card conversions-card">
+                <h2 class="card-title">Conversions</h2>
+                <div class="conversion-row">
+                    <span class="conv-label">Binary</span>
+                    <code class="conv-value" id="binaryValue"></code>
+                    <button class="copy-btn" onclick="copyField('binary', event)" title="Copy Binary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
+                </div>
+                <div class="conversion-row">
+                    <span class="conv-label">Hex</span>
+                    <code class="conv-value" id="hexValue"></code>
+                    <button class="copy-btn" onclick="copyField('hex', event)" title="Copy Hexadecimal">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
+                </div>
+                <div class="conversion-row">
+                    <span class="conv-label">Octal</span>
+                    <code class="conv-value" id="octalValue"></code>
+                    <button class="copy-btn" onclick="copyField('octal', event)" title="Copy Octal">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
+                </div>
+                <div class="conversion-row">
+                    <span class="conv-label">Decimal</span>
+                    <code class="conv-value" id="decimalValue"></code>
+                    <button class="copy-btn" onclick="copyField('decimal', event)" title="Copy Decimal">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
+                </div>
+            </section>
+
+            <!-- ─── Step-by-Step Walkthrough ─── -->
+            <section class="card walkthrough-card">
+                <h2 class="card-title">Step-by-Step Breakdown</h2>
+                <div class="accordion" id="walkthroughAccordion"></div>
+            </section>
+
+            <!-- ─── Precision Loss Warning ─── -->
+            <section class="card precision-card" id="precisionCard" style="display:none;">
+                <div class="precision-warning">
+                    <span class="precision-icon">🔬</span>
+                    <div class="precision-content">
+                        <h3>Precision Loss Detected</h3>
+                        <p id="precisionText"></p>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <footer class="app-footer">
+            <p>Data Representation Visualizer — Built for Learning</p>
+        </footer>
+    </div>
+
+    <!-- Application Logic -->
+    <script src="app.js"></script>
+</body>
+</html>
